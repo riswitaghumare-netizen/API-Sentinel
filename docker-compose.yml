@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentinel-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: SentinelPostgresPass2026!
+      POSTGRES_DB: api_sentinel_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d api_sentinel_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Task Queue & Cache
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. API Sentinel Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinel-backend
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=sqlite+aiosqlite:///./api_sentinel.db
+      - POSTGRES_SERVER=postgres:5432
+      - POSTGRES_USER=sentinel
+      - POSTGRES_PASSWORD=SentinelPostgresPass2026!
+      - POSTGRES_DB=api_sentinel_db
+      - SECRET_KEY=api-sentinel-ultra-secure-secret-key-change-in-production-32bytes
+      - ENCRYPTION_KEY=k8F-4Lp2T8s_vV91-o1_0a3B2c4D5e6F7g8H9i0J1k=
+      - ALLOW_LOCAL_TARGETS=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 4. Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sentinel-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+  # 5. Local Demo Vulnerable API
+  demo-api:
+    build:
+      context: ./demo-api
+      dockerfile: Dockerfile
+    container_name: sentinel-demo-api
+    restart: always
+    ports:
+      - "8001:8001"
+
+  # 6. Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: sentinel-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  redis_data:
