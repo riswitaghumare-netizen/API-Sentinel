@@ -60,6 +60,27 @@ npm install
 npm run dev
 ```
 
+---
+
+## ⚡ 1-Click / Vercel Single-Link Deployment
+
+API Sentinel is architected to run **all 3 components on a single Vercel link**:
+- **SOC Security Dashboard**: `https://<your-app>.vercel.app/`
+- **Backend Core API**: `https://<your-app>.vercel.app/api/v1/...`
+- **Demo Vulnerable Target API**: `https://<your-app>.vercel.app/api/demo/...`
+
+### How to Deploy on Vercel:
+1. Import this repository in your **Vercel Dashboard**.
+2. In Project Settings -> **General**:
+   - Set **Root Directory** to `frontend`
+   - Framework Preset will automatically be detected as **Next.js**
+3. Click **Deploy**!
+4. Default Demo Accounts:
+   - **Admin**: `admin@sentinel.sec` / `SentinelAdmin2026!`
+   - **Analyst**: `analyst@sentinel.sec` / `AnalystPass2026!`
+   - **Developer**: `dev@sentinel.sec` / `DevPass2026!`
+
+
 Visit **http://localhost:3000** to open the SOC Cyber Defense Dashboard.
 
 ---
